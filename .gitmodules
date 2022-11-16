@@ -1,0 +1,8 @@
+[submodule "dependencies/bamsurgeon"]
+	path = dependencies/bamsurgeon
+	url = https://github.com/adamewing/bamsurgeon
+	branch = master
+[submodule "dependencies/variant-extractor"]
+	path = dependencies/variant-extractor
+	url = https://github.com/EUCANCan/variant-extractor
+	branch = main
