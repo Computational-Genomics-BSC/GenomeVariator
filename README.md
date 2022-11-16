@@ -1,8 +1,10 @@
-# Genome Variator<!-- omit in toc -->
+# GenomeVariator<!-- omit in toc -->
+
+GenomeVariator is a tool for adding genomic variants to an existing genome (in SAM/BAM/CRAM format). Currently supported variants are SNVs, indels and SVs (insertions, deletions, translocations, inversions and duplications). It generates realistic genomes as almost always less than 99% of the original real genome is modified. The variants must be provided in a VCF compatible format (VCF/BCF/VCF.GZ). The tool is written in Python and uses [BAMSurgeon](https://github.com/adamewing/bamsurgeon) under the hood to generate the tumorized genomes.
 
 The limited availability of real validated datasets for variant calling benchmarking makes this exercise difficult. This is why tumorized genomes are currently complementing these real datasets. Tumorized genomes ensure the data protection of patients, because they are not identifiable, and thus remove the need for bureaucratic processes that slow down progress in the field of cancer research. Furthermore, tumorized genomes enable researchers to have absolute control over the features and variants they contain.
 
-This repository provides a generator of tumorized genomes with any type of variants (SNVs, indels and structural variants). It is framed under EUCANCan’s (EUropean-CANadian Cancer network) second work package and is used to complement the benchmarking datasets of EUCANCan’s genomic variant calling benchmarking/recommendation platform. The generation workflow is provided as a standalone Python script with a command-line interface and is optimized for running in a HPC environment, more precisely in MareNostrum 4. It uses [BAMSurgeon](https://github.com/adamewing/bamsurgeon) under the hood to generate the tumorized genomes.
+This repository provides a generator of tumorized genomes with any type of variants (SNVs, indels and structural variants). It is framed under EUCANCan’s (EUropean-CANadian Cancer network) second work package and is used to complement the benchmarking datasets of EUCANCan’s genomic variant calling benchmarking/recommendation platform. The generation workflow is provided as a standalone Python script with a command-line interface and is optimized for running in a HPC environment, more precisely in MareNostrum 4.
 
 ## Table of contents<!-- omit in toc -->
 - [Getting started](#getting-started)
