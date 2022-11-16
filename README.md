@@ -14,6 +14,8 @@ This repository provides a generator of tumorized genomes with any type of varia
     - [Dependencies](#dependencies)
   - [AlignmentSplitter](#alignmentsplitter)
     - [Dependencies](#dependencies-1)
+- [Authors](#authors)
+- [License](#license)
 
 
 ## Getting started
@@ -54,12 +56,23 @@ python3 -O src/tumorizer/main.py -i normal_2_30X.cram -o tumor.cram -f ref.fa -v
 Its source code can be found in the [src/tumorizer](src/tumorizer) directory.
 
 #### Dependencies
-* [samtools](http://www.htslib.org/)
-* [pysam](https://github.com/pysam-developers/pysam) >= 0.19.0
+* [SAMtools](http://www.htslib.org/)
+* [Pysam](https://github.com/pysam-developers/pysam) >= 0.19.0
 * BAMSurgeon's [dependencies](https://github.com/adamewing/bamsurgeon#dependencies)
 
 ### AlignmentSplitter
 Its source code can be found in the [src/alignment_splitter](src/alignment_splitter) file.
 
 #### Dependencies
-* [pysam](https://github.com/pysam-developers/pysam) >= 0.19.0
+* [Pysam](https://github.com/pysam-developers/pysam) >= 0.19.0
+
+## Authors
+
+* **Rodrigo Martín** - *Code and Scientific Methodology* - [ORCID](https://orcid.org/0000-0002-6086-9037) [GitHub](https://github.com/Rapsssito)
+* **Romina Royo** - *Scientific Methodology* - [ORCID](https://orcid.org/0000-0003-3493-0874)
+* **Montserrat Puiggròs** - *Scientific Methodology* - [ORCID](https://orcid.org/0000-0001-5034-7924)
+* **David Torrents** - *Scientific Methodology* - [ORCID](https://orcid.org/0000-0002-6086-9037)
+
+## License
+
+This project is licensed under the BSC Dual License - see the [LICENSE](LICENSE.md) file for details.
