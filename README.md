@@ -4,7 +4,7 @@ GenomeVariator is a tool for adding genomic variants to an existing genome (in S
 
 The limited availability of real validated datasets for variant calling benchmarking makes this exercise difficult. This is why tumorized genomes are currently complementing these real datasets. Tumorized genomes ensure the data protection of patients, because they are not identifiable, and thus remove the need for bureaucratic processes that slow down progress in the field of cancer research. Furthermore, tumorized genomes enable researchers to have absolute control over the features and variants they contain.
 
-This repository provides a generator of tumorized genomes with any type of variants (SNVs, indels and structural variants). It is framed under EUCANCan’s (EUropean-CANadian Cancer network) second work package and is used to complement the benchmarking datasets of EUCANCan’s genomic variant calling benchmarking/recommendation platform. The generation workflow is provided as a standalone Python script with a command-line interface and is optimized for running in a HPC environment, more precisely in MareNostrum 4.
+GenomeVariator is framed under EUCANCan’s (EUropean-CANadian Cancer network) second work package and is used to complement the benchmarking datasets of EUCANCan’s genomic variant calling benchmarking/recommendation platform. The generation workflow is provided as a standalone Python script with a command-line interface and is optimized for running in a HPC environment, more precisely in MareNostrum 4.
 
 ## Table of contents<!-- omit in toc -->
 - [Getting started](#getting-started)
@@ -38,7 +38,7 @@ Before using an alignment file, please make sure to add the `RG` tag to the head
 samtools addreplacerg -@ 47 -w -r ID:TUMORIZED -r SM:NORMAL -o out.cram in.cram
 ```
 
-First, split the input file into two files (_Normal_ and _Normal 2_ samples) using AlignmentSplitter. Following is an example of how to divide an 300X input CRAM file into two 30X CRAM files:
+First, split the input file into two files (_Normal_ and _Normal 2_ samples) using AlignmentSplitter. Following is an example of how to divide an 300X input CRAM file into two 30X CRAM files in a 16-core machine:
 ```
 python3 -O src/alignment_splitter.py -i in.cram -ic 300 -o splitted_ -oc 30 -sc 2 -t 16 -s 0
 
@@ -46,7 +46,7 @@ mv splitted_0_30X_0 normal_30X.cram
 mv splitted_0_30X_1 normal_2_30X.cram
 ```
 
-Finally, add the variants to the second normal CRAM file using the Tumorizer:
+Finally, add the variants to the second normal CRAM file using the Tumorizer in a 16-core machine:
 ```
 python3 -O src/tumorizer/main.py -i normal_2_30X.cram -o tumor.cram -f ref.fa -v variants.vcf --vaf 0.5 -td results_tmp -p 16 -mm 32 -s 0
 ```
