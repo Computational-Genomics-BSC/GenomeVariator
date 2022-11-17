@@ -1,5 +1,5 @@
 # Copyright 2022 - Barcelona Supercomputing Center
-# Author: Rodrigo Martin Posada
+# Author: Rodrigo Martin
 # BSC AS IS License
 
 from collections import defaultdict
