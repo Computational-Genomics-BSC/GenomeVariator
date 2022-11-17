@@ -1,6 +1,6 @@
 # Copyright 2022 - Barcelona Supercomputing Center
 # Author: Rodrigo Martin
-# BSC AS IS License
+# BSC Dual License
 
 import argparse
 import gzip
