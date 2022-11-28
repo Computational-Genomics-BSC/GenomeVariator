@@ -83,7 +83,8 @@ def replace_reads(original_file, replace_file, output_file, exclude_file=None, t
     sm_name = 'TUMOR'
     header = original_alignment.header
     new_header = header.to_dict()
-    new_header['RG'] = [{'ID': new_header['RG'][0]['ID'], 'SM': sm_name}]
+    rg_name = new_header['RG'][0]['ID'] if 'RG' in new_header else 'VARIATED_GENOME'
+    new_header['RG'] = [{'ID': rg_name, 'SM': sm_name}]
 
     exclude_reads = exclude_file_reads.copy()
     already_used_read_flags = defaultdict(set)
@@ -98,7 +99,7 @@ def replace_reads(original_file, replace_file, output_file, exclude_file=None, t
         if read_flag in read_flag_set:
             continue
         read_flag_set.add(read_flag)
-        read.set_tag('RG', new_header['RG'][0]['ID'])
+        read.set_tag('RG', rg_name)
         # Add read to replace list in its contig
         if read.reference_name is not None:
             replace_reads[read.reference_name].append(read)
