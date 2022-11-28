@@ -35,6 +35,7 @@ def _contig_to_int(contig):
     else:
         return 22 + ord(contig[0])
 
+
 def _is_sorted(l):
     return all(l[i] <= l[i+1] for i in range(len(l) - 1))
 
@@ -42,7 +43,10 @@ def _is_sorted(l):
 def _subsample_df(df, n):
     if n > len(df):
         return df
-    return df.sample(n, random_state=SEED)
+    filter_array = np.full(len(df), False)
+    # Set n random positions to True
+    filter_array[np.random.choice(len(df), n, replace=False)] = True
+    return df[filter_array]
 
 
 def _read_vcf(vcf_file):
@@ -96,9 +100,9 @@ def _read_vcf(vcf_file):
             total_reads = int(variant_record.info['TumourReads'])
             vaf = ev_reads / total_reads
             variant_record.info['VAF'] = vaf
-            variant_record.info['file'] = vcf_file.split('/')[-1]
-            if length > 100 and length < 550: # Remove small indels
-                continue
+            # variant_record.info['file'] = vcf_file.split('/')[-1]
+            # if length > 100 and length < 550:  # Remove small indels
+            #     continue
 
         variant_data.append([start_chrom, start, ref, alt, length, end_chrom,
                             end, brackets, type_inferred, variant_record])
@@ -114,26 +118,26 @@ def extract_variants(vcf_files):
 
 
 def _maximum_non_overlapping_variants(variants, compare_values, intervals_used, padding):
-    def check_in_used_intervals(val):
-        index_start = bisect.bisect_right(intervals_used['start'], val[start]-padding)
-        index_end = bisect.bisect_right(intervals_used['start'], val[end]+padding)
-        index_end_end = bisect.bisect_right(intervals_used['end'], val[end]+padding)
-        return index_start != len(intervals_used['start']) and (index_start != index_end or index_start != index_end_end)
+    def in_used_intervals(val):
+        index_start = bisect.bisect_right(intervals_used, (val[start], -1))
+        in_interval = (index_start > 0 and intervals_used[index_start-1][1]+padding >= val[start]) \
+                    or (index_start != len(intervals_used) and intervals_used[index_start][0]-padding <= val[end])
+        return in_interval
 
-    selected_variants = [False] * len(variants)
+    selected_variants = np.full(len(variants), False)
     start, end = compare_values
     i = 0
     last_end = 0
     while i < len(variants):
         curr_var = variants.iloc[i]
-        if curr_var[start] <= last_end + padding or check_in_used_intervals(curr_var):
+        if curr_var[start] <= last_end + padding or in_used_intervals(curr_var):
             i += 1
         elif i == len(variants) - 1:
             selected_variants[i] = True
             i += 1
         else:
             next_var = variants.iloc[i+1]
-            if curr_var[end] + padding < next_var[start] or check_in_used_intervals(next_var):
+            if curr_var[end] + padding < next_var[start] or in_used_intervals(next_var):
                 selected_variants[i] = True
                 last_end = curr_var[end]
                 i += 1
@@ -177,50 +181,41 @@ def select_variants(variants_df, indel_threshold, num_variants, padding):
     variants_df.reset_index(drop=True, inplace=True)
     used_intervals_by_contig = dict()
     for chrom in contigs:
-        used_intervals_by_contig[chrom] = {'start': [], 'end': []}
+        used_intervals_by_contig[chrom] = []
 
     selected_variants = []
 
-    # TRN and INV
-    for chrom in contigs:
-        # Start chrom TRN
-        curr_variants = variants_df[variants_df['start_chrom'] == chrom]
-        trn_base_variants = curr_variants[(curr_variants['type_inferred'] == 'TRN') |
-                                          (curr_variants['type_inferred'] == 'INV')]
-        trn_start_variants = _maximum_non_overlapping_variants(trn_base_variants, ['start', 'start'],
-                                                               used_intervals_by_contig[chrom], padding)
-        trn_selected_variants_list = []
-        # End chrom TRN
-        for end_chrom in trn_start_variants['end_chrom'].unique():
-            trn_end_base_variants = trn_start_variants[trn_start_variants['end_chrom'] == end_chrom] \
-                .sort_values(by=['end'])
-            trn_end_variants = _maximum_non_overlapping_variants(trn_end_base_variants, ['end', 'end'],
-                                                                 used_intervals_by_contig[end_chrom], padding)
-            trn_selected_variants_list.append(trn_end_variants)
-            used_intervals_by_contig[end_chrom]['start'] = \
-                list(heapq.merge(used_intervals_by_contig[end_chrom]['start'], trn_end_variants['end']))
-            used_intervals_by_contig[end_chrom]['end'] = \
-                list(heapq.merge(used_intervals_by_contig[end_chrom]['end'], trn_end_variants['end']))
-        if len(trn_selected_variants_list) == 0:
-            continue
-        trn_selected_variants = pd.concat(trn_selected_variants_list)
-        trn_selected_subsampled = _subsample_df(
-            trn_selected_variants[trn_selected_variants['type_inferred'] == 'TRN'], num_variants)
-        inv_selected_subsampled = _subsample_df(
-            trn_selected_variants[trn_selected_variants['type_inferred'] == 'INV'], num_variants)
-        trn_selected_variants = pd.concat([trn_selected_subsampled, inv_selected_subsampled])
-        trn_selected_variants.sort_values(by=['start'], inplace=True)
-        used_intervals_by_contig[chrom]['start'] = \
-            list(heapq.merge(used_intervals_by_contig[chrom]['start'], trn_selected_variants['start']))
-        used_intervals_by_contig[chrom]['end'] = \
-            list(heapq.merge(used_intervals_by_contig[chrom]['end'], trn_selected_variants['start']))
+    def non_overlapping_trn(variants, padding, max_variants=num_variants):
+        chrom_selected_variants_list = []
+        for chrom in contigs:
+            chrom_variants = variants[variants['start_chrom'] == chrom]
+            chrom_selected_variants_start = _maximum_non_overlapping_variants(
+                chrom_variants, ['start', 'start'], used_intervals_by_contig[chrom], padding)
+            for end_chrom in chrom_selected_variants_start['end_chrom'].unique():
+                if end_chrom == chrom:
+                    temp_used_intervals = list(heapq.merge(used_intervals_by_contig[chrom],
+                                                           chrom_selected_variants_start[['start', 'start']].itertuples(index=False, name=None)))
+                else:
+                    temp_used_intervals = used_intervals_by_contig[end_chrom]
+                end_base_variants = chrom_selected_variants_start[chrom_selected_variants_start['end_chrom'] == end_chrom].sort_values(by=[
+                                                                                                                                       'end'])
+                chrom_selected_variants = _maximum_non_overlapping_variants(
+                    end_base_variants, ['end', 'end'], temp_used_intervals, padding)
 
-        complete_inversions = _retrieve_complete_inversions(
-            trn_selected_variants[trn_selected_variants['type_inferred'] == 'INV'], curr_variants[curr_variants['type_inferred'] == 'INV'])
-        trn_selected_variants = pd.concat(
-            [trn_selected_variants[trn_selected_variants['type_inferred'] == 'TRN'], complete_inversions])
+                used_intervals_by_contig[end_chrom] = list(heapq.merge(used_intervals_by_contig[end_chrom],
+                                                                       chrom_selected_variants[['end', 'end']].itertuples(index=False, name=None)))
+            chrom_selected_variants_list.append(chrom_selected_variants)
 
-        selected_variants.append(trn_selected_variants)
+        # Concatenate all variants and select the maximum number of variants
+        curr_selected_variants = pd.concat(chrom_selected_variants_list)
+        curr_selected_variants = _subsample_df(curr_selected_variants, max_variants)
+        curr_selected_variants.sort_values(by=['start'], inplace=True)
+        # Update used intervals
+        for chrom in contigs:
+            curr_selected_variants_chrom = curr_selected_variants[curr_selected_variants['start_chrom'] == chrom]
+            used_intervals_by_contig[chrom] = list(heapq.merge(used_intervals_by_contig[chrom],
+                                                               curr_selected_variants_chrom[['start', 'start']].itertuples(index=False, name=None)))
+        selected_variants.append(curr_selected_variants)
 
     def non_overlapping(variants, padding, compare_values=['start', 'end'], max_variants=num_variants):
         chrom_selected_variants_list = []
@@ -235,11 +230,17 @@ def select_variants(variants_df, indel_threshold, num_variants, padding):
         # Update used intervals
         for chrom in contigs:
             curr_selected_variants_chrom = curr_selected_variants[curr_selected_variants['start_chrom'] == chrom]
-            used_intervals_by_contig[chrom]['start'] = \
-                list(heapq.merge(used_intervals_by_contig[chrom]['start'], curr_selected_variants_chrom[compare_values[0]]))
-            used_intervals_by_contig[chrom]['end'] = \
-                list(heapq.merge(used_intervals_by_contig[chrom]['end'], curr_selected_variants_chrom[compare_values[1]]))
+            used_intervals_by_contig[chrom] = list(heapq.merge(used_intervals_by_contig[chrom],
+                                                               curr_selected_variants_chrom[compare_values].itertuples(index=False, name=None)))
         selected_variants.append(curr_selected_variants)
+
+    # TRN
+    trn_base_variants = variants_df[variants_df['type_inferred'] == 'TRN']
+    non_overlapping_trn(trn_base_variants, padding)
+
+    # INV
+    inv_base_variants = variants_df[variants_df['type_inferred'] == 'INV']
+    non_overlapping_trn(inv_base_variants, padding)
 
     # INS
     ins_base_variants = variants_df[(variants_df['type_inferred'] == 'INS') &
@@ -248,6 +249,7 @@ def select_variants(variants_df, indel_threshold, num_variants, padding):
     # DUP
     dup_base_variants = variants_df[(variants_df['type_inferred'] == 'DUP')]
     non_overlapping(dup_base_variants, padding)
+
     # # DEL (> 500)
     # del_base_variants = variants_df[(variants_df['type_inferred'] == 'DEL') &
     #                                 (variants_df['length'] >= 500)]
