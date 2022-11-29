@@ -121,7 +121,7 @@ def _maximum_non_overlapping_variants(variants, compare_values, intervals_used, 
     def in_used_intervals(val):
         index_start = bisect.bisect_right(intervals_used, (val[start], -1))
         in_interval = (index_start > 0 and intervals_used[index_start-1][1]+padding >= val[start]) \
-                    or (index_start != len(intervals_used) and intervals_used[index_start][0]-padding <= val[end])
+            or (index_start != len(intervals_used) and intervals_used[index_start][0]-padding <= val[end])
         return in_interval
 
     selected_variants = np.full(len(variants), False)
@@ -187,34 +187,50 @@ def select_variants(variants_df, indel_threshold, num_variants, padding):
 
     def non_overlapping_trn(variants, padding, max_variants=num_variants):
         chrom_selected_variants_list = []
+        # Copy used intervals for temporal use
+        temp_used_intervals_by_contig = dict()
+        for chrom in contigs:
+            temp_used_intervals_by_contig[chrom] = used_intervals_by_contig[chrom]
+
         for chrom in contigs:
             chrom_variants = variants[variants['start_chrom'] == chrom]
             chrom_selected_variants_start = _maximum_non_overlapping_variants(
-                chrom_variants, ['start', 'start'], used_intervals_by_contig[chrom], padding)
+                chrom_variants, ['start', 'start'], temp_used_intervals_by_contig[chrom], padding)
             for end_chrom in chrom_selected_variants_start['end_chrom'].unique():
                 if end_chrom == chrom:
-                    temp_used_intervals = list(heapq.merge(used_intervals_by_contig[chrom],
+                    temp_used_intervals = list(heapq.merge(temp_used_intervals_by_contig[chrom],
                                                            chrom_selected_variants_start[['start', 'start']].itertuples(index=False, name=None)))
                 else:
-                    temp_used_intervals = used_intervals_by_contig[end_chrom]
+                    temp_used_intervals = temp_used_intervals_by_contig[end_chrom]
                 end_base_variants = chrom_selected_variants_start[chrom_selected_variants_start['end_chrom'] == end_chrom].sort_values(by=[
                                                                                                                                        'end'])
-                chrom_selected_variants = _maximum_non_overlapping_variants(
+                chrom_selected_variants_end = _maximum_non_overlapping_variants(
                     end_base_variants, ['end', 'end'], temp_used_intervals, padding)
+                # Update used intervals
+                temp_used_intervals_by_contig[end_chrom] = list(heapq.merge(temp_used_intervals_by_contig[end_chrom],
+                                                                            chrom_selected_variants_end[['end', 'end']].itertuples(index=False, name=None)))
+                # Get the variants keeping order
+                chrom_selected_variants = chrom_selected_variants_start[chrom_selected_variants_start.index.isin(
+                    chrom_selected_variants_end.index)]
 
-                used_intervals_by_contig[end_chrom] = list(heapq.merge(used_intervals_by_contig[end_chrom],
-                                                                       chrom_selected_variants[['end', 'end']].itertuples(index=False, name=None)))
-            chrom_selected_variants_list.append(chrom_selected_variants)
+                # Update used intervals
+                temp_used_intervals_by_contig[chrom] = list(heapq.merge(temp_used_intervals_by_contig[chrom],
+                                                                        chrom_selected_variants[['start', 'start']].itertuples(index=False, name=None)))
+                chrom_selected_variants_list.append(chrom_selected_variants)
 
         # Concatenate all variants and select the maximum number of variants
         curr_selected_variants = pd.concat(chrom_selected_variants_list)
         curr_selected_variants = _subsample_df(curr_selected_variants, max_variants)
-        curr_selected_variants.sort_values(by=['start'], inplace=True)
         # Update used intervals
+        end_sorted_variants = curr_selected_variants.sort_values(by=['end'])
+        curr_selected_variants = curr_selected_variants.sort_values(by=['start'])
         for chrom in contigs:
             curr_selected_variants_chrom = curr_selected_variants[curr_selected_variants['start_chrom'] == chrom]
+            end_sorted_variants_chrom = end_sorted_variants[end_sorted_variants['end_chrom'] == chrom]
             used_intervals_by_contig[chrom] = list(heapq.merge(used_intervals_by_contig[chrom],
                                                                curr_selected_variants_chrom[['start', 'start']].itertuples(index=False, name=None)))
+            used_intervals_by_contig[chrom] = list(heapq.merge(used_intervals_by_contig[chrom],
+                                                               end_sorted_variants_chrom[['end', 'end']].itertuples(index=False, name=None)))
         selected_variants.append(curr_selected_variants)
 
     def non_overlapping(variants, padding, compare_values=['start', 'end'], max_variants=num_variants):
