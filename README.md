@@ -64,8 +64,6 @@ Its source code can be found in the [src/alignment_splitter](src/alignment_split
 ## Authors
 
 * **Rodrigo Martín** - *Code and Scientific Methodology* - [ORCID](https://orcid.org/0000-0002-6086-9037) [GitHub](https://github.com/Rapsssito)
-* **Romina Royo** - *Scientific Methodology* - [ORCID](https://orcid.org/0000-0003-3493-0874)
-* **Montserrat Puiggròs** - *Scientific Methodology* - [ORCID](https://orcid.org/0000-0001-5034-7924)
 * **David Torrents** - *Scientific Methodology* - [ORCID](https://orcid.org/0000-0002-6086-9037)
 
 ## License

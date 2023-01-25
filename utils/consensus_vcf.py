@@ -174,7 +174,8 @@ def _retrieve_complete_inversions(selected_inversions, all_inversions):
     return pd.DataFrame.from_records(inversions, columns=selected_inversions.columns)
 
 
-def select_variants(variants_df, indel_threshold, num_variants, padding):
+def select_variants(variants_df, indel_threshold, num_variants_list, padding):
+    snv_max, indel_max, trn_max, inv_max, dup_max, del_max, ins_max = num_variants_list
     contigs = variants_df['start_chrom'].unique()
     variants_df['start_length'] = variants_df['start'] + variants_df['length']
     variants_df.sort_values(by=['start'], inplace=True)
@@ -185,7 +186,7 @@ def select_variants(variants_df, indel_threshold, num_variants, padding):
 
     selected_variants = []
 
-    def non_overlapping_trn(variants, padding, max_variants=num_variants):
+    def non_overlapping_trn(variants, padding, max_variants):
         chrom_selected_variants_list = []
         # Copy used intervals for temporal use
         temp_used_intervals_by_contig = dict()
@@ -233,7 +234,7 @@ def select_variants(variants_df, indel_threshold, num_variants, padding):
                                                                end_sorted_variants_chrom[['end', 'end']].itertuples(index=False, name=None)))
         selected_variants.append(curr_selected_variants)
 
-    def non_overlapping(variants, padding, compare_values=['start', 'end'], max_variants=num_variants):
+    def non_overlapping(variants, padding, max_variants, compare_values=['start', 'end']):
         chrom_selected_variants_list = []
         for chrom in contigs:
             chrom_variants = variants[variants['start_chrom'] == chrom]
@@ -252,19 +253,19 @@ def select_variants(variants_df, indel_threshold, num_variants, padding):
 
     # TRN
     trn_base_variants = variants_df[variants_df['type_inferred'] == 'TRN']
-    non_overlapping_trn(trn_base_variants, padding)
+    non_overlapping_trn(trn_base_variants, padding, trn_max)
 
     # INV
     inv_base_variants = variants_df[variants_df['type_inferred'] == 'INV']
-    non_overlapping_trn(inv_base_variants, padding)
+    non_overlapping_trn(inv_base_variants, padding, inv_max)
 
     # INS
     ins_base_variants = variants_df[(variants_df['type_inferred'] == 'INS') &
                                     (variants_df['length'] > indel_threshold)]
-    non_overlapping(ins_base_variants, padding, ['start', 'start_length'])
+    non_overlapping(ins_base_variants, padding, ins_max, ['start', 'start_length'])
     # DUP
     dup_base_variants = variants_df[(variants_df['type_inferred'] == 'DUP')]
-    non_overlapping(dup_base_variants, padding)
+    non_overlapping(dup_base_variants, padding, dup_max)
 
     # # DEL (> 500)
     # del_base_variants = variants_df[(variants_df['type_inferred'] == 'DEL') &
@@ -278,18 +279,18 @@ def select_variants(variants_df, indel_threshold, num_variants, padding):
     # DEL
     del_base_variants = variants_df[(variants_df['type_inferred'] == 'DEL') &
                                     (variants_df['length'] > indel_threshold)]
-    non_overlapping(del_base_variants, padding)
+    non_overlapping(del_base_variants, padding, del_max)
     # Indel INS
     indel_ins_base_variants = variants_df[(variants_df['type_inferred'] == 'INS') &
                                           (variants_df['length'] <= indel_threshold)]
-    non_overlapping(indel_ins_base_variants, padding, ['start', 'start_length'], max_variants=num_variants // 2)
+    non_overlapping(indel_ins_base_variants, padding, indel_max // 2, ['start', 'start_length'])
     # Indel DEL
     indel_del_base_variants = variants_df[(variants_df['type_inferred'] == 'DEL') &
                                           (variants_df['length'] <= indel_threshold)]
-    non_overlapping(indel_del_base_variants, padding, max_variants=num_variants // 2)
+    non_overlapping(indel_del_base_variants, padding, indel_max // 2)
     # SNV
     snv_base_variants = variants_df[variants_df['type_inferred'] == 'SNV']
-    non_overlapping(snv_base_variants, padding)
+    non_overlapping(snv_base_variants, padding, snv_max)
 
     all_variants_df = pd.concat(selected_variants)
     return all_variants_df
@@ -324,8 +325,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--inputs', required=True, nargs='+', type=str, help='Input VCF files')
     parser.add_argument('-o', '--output', required=True, type=str, help='Output VCF file')
-    parser.add_argument('-n', '--num-variants', type=int, default=200,
-                        help='Maximum number of variants to extract of each type')
+    parser.add_argument('-n', '--num-variants', type=int, nargs=7, default=[200, 200, 200, 200, 200, 200, 200],
+                        help='Maximum number of variants to extract of each type [SNV, INDEL, TRN, INV, DUP, DEL, INS]. Default: [200, 200, 200, 200, 200, 200, 200]')
     parser.add_argument('--padding', type=int, default=550, help='Minumum padding (bp) between variants')
     parser.add_argument('--indel-threshold', type=int, default=100, help='Maximum length of an indel')
 
