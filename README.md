@@ -11,10 +11,7 @@ GenomeVariator is framed under EUCANCan’s (EUropean-CANadian Cancer network) s
 - [Usage](#usage)
 - [Scripts](#scripts)
   - [Tumorizer](#tumorizer)
-    - [Dependencies](#dependencies)
   - [AlignmentSplitter](#alignmentsplitter)
-    - [Dependencies](#dependencies-1)
-- [Authors](#authors)
 - [License](#license)
 
 
@@ -23,9 +20,10 @@ GenomeVariator is framed under EUCANCan’s (EUropean-CANadian Cancer network) s
 You can build the docker image with the following command:
 
 ```bash
-docker build -t tumorizer-generator .
+docker build -t genome-variator .
 ```
 
+Or follow the instructions in the [Dockerfile](Dockerfile) to install the dependencies.
 
 ## Usage
 
@@ -50,7 +48,7 @@ python3 -O src/tumorizer/main.py -i normal_2_30X.cram -o tumor.cram -f ref.fa -v
 ### Tumorizer
 Its source code can be found in the [src/tumorizer](src/tumorizer) directory.
 
-#### Dependencies
+#### Dependencies<!-- omit in toc -->
 * [SAMtools](http://www.htslib.org/)
 * [Pysam](https://github.com/pysam-developers/pysam) >= 0.19.0
 * BAMSurgeon's [dependencies](https://github.com/adamewing/bamsurgeon#dependencies)
@@ -58,13 +56,8 @@ Its source code can be found in the [src/tumorizer](src/tumorizer) directory.
 ### AlignmentSplitter
 Its source code can be found in the [src/alignment_splitter](src/alignment_splitter) file.
 
-#### Dependencies
+#### Dependencies<!-- omit in toc -->
 * [Pysam](https://github.com/pysam-developers/pysam) >= 0.19.0
-
-## Authors
-
-* **Rodrigo Martín** - *Code and Scientific Methodology* - [ORCID](https://orcid.org/0000-0002-6086-9037) [GitHub](https://github.com/Rapsssito)
-* **David Torrents** - *Scientific Methodology* - [ORCID](https://orcid.org/0000-0002-6086-9037)
 
 ## License
 

@@ -27,11 +27,6 @@ RUN mkdir $HOME/bin
 # Python dependencies
 RUN pip install pysam
 
-# art_illumina
-RUN wget https://www.niehs.nih.gov/research/resources/assets/docs/artbinmountrainier2016.06.05linux64.tgz
-RUN tar -xvzf artbinmountrainier2016.06.05linux64.tgz
-RUN cp art_bin_MountRainier/art_illumina $HOME/bin
-
 # Velvet
 RUN wget https://github.com/dzerbino/velvet/archive/refs/tags/v1.2.10.tar.gz && tar -xvzf v1.2.10.tar.gz
 RUN make -C velvet-1.2.10
