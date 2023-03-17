@@ -12,7 +12,6 @@ GenomeVariator is framed under EUCANCan’s (EUropean-CANadian Cancer network) s
 - [Scripts](#scripts)
   - [Tumorizer](#tumorizer)
   - [AlignmentSplitter](#alignmentsplitter)
-- [License](#license)
 
 
 ## Getting started
@@ -52,13 +51,11 @@ Its source code can be found in the [src/tumorizer](src/tumorizer) directory.
 * [SAMtools](http://www.htslib.org/)
 * [Pysam](https://github.com/pysam-developers/pysam) >= 0.19.0
 * BAMSurgeon's [dependencies](https://github.com/adamewing/bamsurgeon#dependencies)
+* [variant-extractor](https://github.com/EUCANCan/variant-extractor)
 
 ### AlignmentSplitter
 Its source code can be found in the [src/alignment_splitter](src/alignment_splitter) file.
 
 #### Dependencies<!-- omit in toc -->
 * [Pysam](https://github.com/pysam-developers/pysam) >= 0.19.0
-
-## License
-
-This project is licensed under the BSC Dual License - see the [LICENSE](LICENSE.md) file for details.
+* [variant-extractor](https://github.com/EUCANCan/variant-extractor)

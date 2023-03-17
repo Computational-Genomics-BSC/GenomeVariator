@@ -25,7 +25,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
 RUN mkdir $HOME/bin
 
 # Python dependencies
-RUN pip install pysam
+RUN pip install pysam variant-extractor
 
 # Velvet
 RUN wget https://github.com/dzerbino/velvet/archive/refs/tags/v1.2.10.tar.gz && tar -xvzf v1.2.10.tar.gz

@@ -10,12 +10,8 @@ import hashlib
 import random
 import pysam
 
-# Add variant_extractor to PYTHONPATH
-VARIANT_EXTRACTOR_DIR = os.path.abspath(os.path.join(
-    os.path.dirname(__file__), '..', 'dependencies', 'variant-extractor', 'src'))
-sys.path.insert(0, VARIANT_EXTRACTOR_DIR)
-from variant_extractor import VariantExtractor  # noqa
-from variant_extractor.variants import VariantType  # noqa
+from variant_extractor import VariantExtractor
+from variant_extractor.variants import VariantType
 
 
 if __name__ == '__main__':

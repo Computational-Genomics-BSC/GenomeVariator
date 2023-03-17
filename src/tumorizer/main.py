@@ -10,10 +10,6 @@ import random
 import numpy as np
 import pysam
 
-# Add variant_extractor to PYTHONPATH
-VARIANT_EXTRACTOR_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                                     '..', '..', 'dependencies', 'variant-extractor', 'src'))
-sys.path.insert(0, VARIANT_EXTRACTOR_DIR)
 
 from common import index_alignment, replace_reads, concat_vcf_files  # noqa
 from bamsurgeon_tools import run_bamsurgeon, vct_to_bamsurgeon  # noqa

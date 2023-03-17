@@ -13,12 +13,7 @@ import pandas as pd
 import numpy as np
 import pysam
 
-# Add variant_extractor to PYTHONPATH
-VARIANT_EXTRACTOR_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                                     '..', 'dependencies', 'variant-extractor', 'src'))
-sys.path.insert(0, VARIANT_EXTRACTOR_DIR)
-
-from variant_extractor import VariantExtractor  # noqa
+from variant_extractor import VariantExtractor
 
 SEED = 1
 COMPLETE_INVERSION_THRESHOLD = 50
@@ -59,10 +54,10 @@ def _read_vcf(vcf_file):
         alt = variant_record.alt
         length = variant_record.length
         end = variant_record.end
-        if variant_record.alt_sv_bracket:
-            end_chrom = variant_record.alt_sv_bracket.contig.replace('chr', '')
+        if variant_record.alt_sv_breakend:
+            end_chrom = variant_record.alt_sv_breakend.contig.replace('chr', '')
             if start_chrom != end_chrom:
-                end = variant_record.alt_sv_bracket.pos
+                end = variant_record.alt_sv_breakend.pos
         else:
             end_chrom = start_chrom
         type_inferred = variant_record.variant_type.name
@@ -74,35 +69,35 @@ def _read_vcf(vcf_file):
         elif type_inferred == 'DUP':
             brackets = ']N'
         elif type_inferred == 'INV':
-            prefix = 'N' if variant_record.alt_sv_bracket.prefix else ''
-            suffix = 'N' if variant_record.alt_sv_bracket.suffix else ''
-            brackets = prefix + variant_record.alt_sv_bracket.bracket + suffix
-        elif type_inferred == 'TRN':
-            prefix = 'N' if variant_record.alt_sv_bracket.prefix else ''
-            suffix = 'N' if variant_record.alt_sv_bracket.suffix else ''
-            brackets = prefix + variant_record.alt_sv_bracket.bracket + variant_record.alt_sv_bracket.bracket + suffix
+            prefix = 'N' if variant_record.alt_sv_breakend.prefix else '' # type: ignore
+            suffix = 'N' if variant_record.alt_sv_breakend.suffix else '' # type: ignore
+            brackets = prefix + variant_record.alt_sv_breakend.bracket + suffix # type: ignore
+        elif type_inferred == 'TRA':
+            prefix = 'N' if variant_record.alt_sv_breakend.prefix else '' # type: ignore
+            suffix = 'N' if variant_record.alt_sv_breakend.suffix else '' # type: ignore
+            brackets = prefix + variant_record.alt_sv_breakend.bracket + variant_record.alt_sv_breakend.bracket + suffix # type: ignore
 
-        if length == 0 and not type_inferred == 'TRN' and not type_inferred == 'SNV' and not type_inferred == 'SGL':
+        if length == 0 and not type_inferred == 'TRA' and not type_inferred == 'SNV' and not type_inferred == 'SGL':
             print('Warning: Skipped variant with 0 length.')
             continue
 
         # Remove FORMAT and SAMPLE fields
         variant_record = variant_record._replace(format=[], samples=dict())
 
-        if 'VAF' not in variant_record.info:
-            # if len(RANDOM_VAFS) > 0:
-            #     vaf = np.random.choice(RANDOM_VAFS, p=RANDOM_VAFS_WEIGHTS)
-            #     variant_record.info['VAF'] = vaf
-            ev_reads = variant_record.info['TumourEvidenceReads']
-            ev_reads = int(ev_reads) if isinstance(ev_reads, str) else sum([int(x) for x in ev_reads])
-            # if 'TumourBp2ClipEvidence' in variant_record.info:
-            #     ev_reads += (int(variant_record.info['TumourBp2ClipEvidence']) + int(variant_record.info['TumourBp1ClipEvidence'])) / 2
-            total_reads = int(variant_record.info['TumourReads'])
-            vaf = ev_reads / total_reads
-            variant_record.info['VAF'] = vaf
-            # variant_record.info['file'] = vcf_file.split('/')[-1]
-            # if length > 100 and length < 550:  # Remove small indels
-            #     continue
+        # if 'VAF' not in variant_record.info:
+        #     # if len(RANDOM_VAFS) > 0:
+        #     #     vaf = np.random.choice(RANDOM_VAFS, p=RANDOM_VAFS_WEIGHTS)
+        #     #     variant_record.info['VAF'] = vaf
+        #     ev_reads = variant_record.info['TumourEvidenceReads']
+        #     ev_reads = int(ev_reads) if isinstance(ev_reads, str) else sum([int(x) for x in ev_reads])
+        #     # if 'TumourBp2ClipEvidence' in variant_record.info:
+        #     #     ev_reads += (int(variant_record.info['TumourBp2ClipEvidence']) + int(variant_record.info['TumourBp1ClipEvidence'])) / 2
+        #     total_reads = int(variant_record.info['TumourReads'])
+        #     vaf = ev_reads / total_reads
+        #     variant_record.info['VAF'] = vaf
+        #     # variant_record.info['file'] = vcf_file.split('/')[-1]
+        #     # if length > 100 and length < 550:  # Remove small indels
+        #     #     continue
 
         variant_data.append([start_chrom, start, ref, alt, length, end_chrom,
                             end, brackets, type_inferred, variant_record])
@@ -251,8 +246,8 @@ def select_variants(variants_df, indel_threshold, num_variants_list, padding):
                                                                curr_selected_variants_chrom[compare_values].itertuples(index=False, name=None)))
         selected_variants.append(curr_selected_variants)
 
-    # TRN
-    trn_base_variants = variants_df[variants_df['type_inferred'] == 'TRN']
+    # TRA
+    trn_base_variants = variants_df[variants_df['type_inferred'] == 'TRA']
     non_overlapping_trn(trn_base_variants, padding, trn_max)
 
     # INV
@@ -317,7 +312,7 @@ def write_vcf(variants_df, output_file, template_vcfs):
     variants_df.sort_values(by=['start_chrom', 'start'], inplace=True)
     with open(output_file, 'w') as output_vcf:
         output_vcf.write(header_str)
-        for _, variant_record_obj in variants_df['variant_obj'].iteritems():
+        for _, variant_record_obj in variants_df['variant_obj'].items():
             output_vcf.write(str(variant_record_obj)+'\n')
 
 
@@ -326,7 +321,7 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--inputs', required=True, nargs='+', type=str, help='Input VCF files')
     parser.add_argument('-o', '--output', required=True, type=str, help='Output VCF file')
     parser.add_argument('-n', '--num-variants', type=int, nargs=7, default=[200, 200, 200, 200, 200, 200, 200],
-                        help='Maximum number of variants to extract of each type [SNV, INDEL, TRN, INV, DUP, DEL, INS]. Default: [200, 200, 200, 200, 200, 200, 200]')
+                        help='Maximum number of variants to extract of each type [SNV, INDEL, TRA, INV, DUP, DEL, INS]. Default: [200, 200, 200, 200, 200, 200, 200]')
     parser.add_argument('--padding', type=int, default=550, help='Minumum padding (bp) between variants')
     parser.add_argument('--indel-threshold', type=int, default=100, help='Maximum length of an indel')
 
