@@ -50,18 +50,13 @@ def index_alignment(alignment_path, processes):
     logging.info(f'Indexing with: {" ".join(index_args)}')
     return subprocess.run(index_args, check=True)
 
-
-def _get_read_mode(filename):
-    return 'rb' if filename.endswith('.bam') else 'rc' if filename.endswith('.cram') else 'r'
-
-
 def _get_write_mode(filename):
     return 'wb' if filename.endswith('.bam') else 'wc' if filename.endswith('.cram') else 'w'
 
 
-def replace_reads(original_file, replace_file, output_file, exclude_file=None, threads=1):
+def replace_reads(original_file, replace_file, output_file, fasta_ref=None, exclude_file=None, threads=1):
     # Open the original file
-    original_alignment = pysam.AlignmentFile(original_file, _get_read_mode(original_file), threads=threads)
+    original_alignment = pysam.AlignmentFile(original_file, threads=threads, reference_filename=fasta_ref)
 
     # Get excluded reads
     exclude_file_reads = set()
@@ -89,7 +84,7 @@ def replace_reads(original_file, replace_file, output_file, exclude_file=None, t
     exclude_reads = exclude_file_reads.copy()
     already_used_read_flags = defaultdict(set)
     # Get reads to replace
-    replace_alignment = pysam.AlignmentFile(replace_file, _get_read_mode(replace_file), threads=threads)
+    replace_alignment = pysam.AlignmentFile(replace_file, threads=threads, reference_filename=fasta_ref)
     for read in replace_alignment.fetch(until_eof=True):
         if read.query_name in exclude_file_reads:
             continue

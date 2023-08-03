@@ -2,8 +2,6 @@
 # Author: Rodrigo Martin
 # BSC Dual License
 
-import os
-import sys
 import argparse
 import bisect
 import hashlib
@@ -17,6 +15,7 @@ from variant_extractor.variants import VariantType
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--input', required=True, type=str, help='Input alignment file')
+    parser.add_argument('-f', '--fasta', type=str, help='Reference fasta file (required for CRAM files)')
     parser.add_argument('-ic', '--input-coverage', required=True, type=int, help='Input file coverage')
     parser.add_argument('-o', '--output', required=True, type=str, help='Output prefix')
     parser.add_argument('-oc', '--output-coverages', required=True, nargs='+', type=int, help='Output coverages')
@@ -37,7 +36,7 @@ if __name__ == '__main__':
         raise ValueError('Output coverages exceed input coverage')
 
     # Open input file
-    input_file = pysam.AlignmentFile(args.input, threads=args.threads)
+    input_file = pysam.AlignmentFile(args.input, threads=args.threads, reference_filename=args.fasta)
     # Get output file extension
     write_mode = 'wc' if input_file.is_cram else 'wb' if input_file.is_bam else 'w'
     extension_type = 'cram' if input_file.is_cram else 'bam' if input_file.is_bam else 'sam'

@@ -50,16 +50,17 @@ def vct_to_bamsurgeon(vcf_file, output_dir, vaf, indel_threshold):
             output_file_snv.write(
                 f'{variant_record.contig} {variant_record.pos} {variant_record.pos} {var_vaf} {variant_record.alt}\n')
         else:
-            if variant_record.variant_type == VariantType.TRN or variant_record.variant_type == VariantType.INV:
+            if variant_record.variant_type == VariantType.TRA or variant_record.variant_type == VariantType.INV:
+                assert variant_record.alt_sv_breakend is not None
                 # Convert INV to TRN since most of them are not complete
-                alt_contig = variant_record.alt_sv_bracket.contig
-                alt_pos = variant_record.alt_sv_bracket.pos
+                alt_contig = variant_record.alt_sv_breakend.contig
+                alt_pos = variant_record.alt_sv_breakend.pos
                 # Calculate strand notation
-                if variant_record.alt_sv_bracket.bracket == '[' and variant_record.alt_sv_bracket.prefix:
+                if variant_record.alt_sv_breakend.bracket == '[' and variant_record.alt_sv_breakend.prefix:
                     strand_notation = '++'
-                elif variant_record.alt_sv_bracket.bracket == ']' and variant_record.alt_sv_bracket.prefix:
+                elif variant_record.alt_sv_breakend.bracket == ']' and variant_record.alt_sv_breakend.prefix:
                     strand_notation = '+-'
-                elif variant_record.alt_sv_bracket.bracket == '[' and not variant_record.alt_sv_bracket.prefix:
+                elif variant_record.alt_sv_breakend.bracket == '[' and not variant_record.alt_sv_breakend.prefix:
                     strand_notation = '-+'
                 else:
                     strand_notation = '--'
