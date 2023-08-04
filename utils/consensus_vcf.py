@@ -2,8 +2,6 @@
 # Author: Rodrigo Martin
 # BSC Dual License
 
-import os
-import sys
 import argparse
 import heapq
 import bisect
@@ -15,12 +13,7 @@ import pysam
 
 from variant_extractor import VariantExtractor
 
-SEED = 1
 COMPLETE_INVERSION_THRESHOLD = 50
-RANDOM_VAFS = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
-RANDOM_VAFS_WEIGHTS = [0.05, 0.2, 0.3, 0.25, 0.1, 0.1]
-
-np.random.seed(SEED)
 
 
 def _contig_to_int(contig):
@@ -29,10 +22,6 @@ def _contig_to_int(contig):
         return int(contig)
     else:
         return 22 + ord(contig[0])
-
-
-def _is_sorted(l):
-    return all(l[i] <= l[i+1] for i in range(len(l) - 1))
 
 
 def _subsample_df(df, n):
@@ -44,70 +33,37 @@ def _subsample_df(df, n):
     return df[filter_array]
 
 
+def _set_random_vaf(random_vafs, random_vafs_weights, force):
+    def _set_random_vaf_aux(variant_record, random_vafs, random_vafs_weights, force):
+        if force or 'VAF' not in variant_record.info:
+            vaf = np.random.choice(random_vafs, p=random_vafs_weights)
+            variant_record.info['VAF'] = vaf
+    return lambda variant_record: _set_random_vaf_aux(variant_record, random_vafs, random_vafs_weights, force)
+
+
 def _read_vcf(vcf_file):
+    def clean_format_and_samples(variant_record):
+        variant_record.format = ['GT']
+        variant_record.samples = {
+            'DUMMY_NORMAL': {
+                'GT': (0, 0)
+            },
+            'DUMMY_TUMOR': {
+                'GT': (0, 1)
+            }
+        }
+
     extractor = VariantExtractor(vcf_file, pass_only=True)
-    variant_data = []
-    for variant_record in extractor:
-        start_chrom = variant_record.contig.replace('chr', '')
-        start = variant_record.pos
-        ref = variant_record.ref
-        alt = variant_record.alt
-        length = variant_record.length
-        end = variant_record.end
-        if variant_record.alt_sv_breakend:
-            end_chrom = variant_record.alt_sv_breakend.contig.replace('chr', '')
-            if start_chrom != end_chrom:
-                end = variant_record.alt_sv_breakend.pos
-        else:
-            end_chrom = start_chrom
-        type_inferred = variant_record.variant_type.name
+    variant_df = extractor.to_dataframe()
+    # Remove FORMAT and SAMPLE fields
+    variant_df['variant_record_obj'].apply(clean_format_and_samples)
 
-        # Brackets
-        brackets = ''
-        if type_inferred == 'DEL':
-            brackets = 'N['
-        elif type_inferred == 'DUP':
-            brackets = ']N'
-        elif type_inferred == 'INV':
-            prefix = 'N' if variant_record.alt_sv_breakend.prefix else '' # type: ignore
-            suffix = 'N' if variant_record.alt_sv_breakend.suffix else '' # type: ignore
-            brackets = prefix + variant_record.alt_sv_breakend.bracket + suffix # type: ignore
-        elif type_inferred == 'TRA':
-            prefix = 'N' if variant_record.alt_sv_breakend.prefix else '' # type: ignore
-            suffix = 'N' if variant_record.alt_sv_breakend.suffix else '' # type: ignore
-            brackets = prefix + variant_record.alt_sv_breakend.bracket + variant_record.alt_sv_breakend.bracket + suffix # type: ignore
-
-        if length == 0 and not type_inferred == 'TRA' and not type_inferred == 'SNV' and not type_inferred == 'SGL':
-            print('Warning: Skipped variant with 0 length.')
-            continue
-
-        # Remove FORMAT and SAMPLE fields
-        variant_record = variant_record._replace(format=[], samples=dict())
-
-        # if 'VAF' not in variant_record.info:
-        #     # if len(RANDOM_VAFS) > 0:
-        #     #     vaf = np.random.choice(RANDOM_VAFS, p=RANDOM_VAFS_WEIGHTS)
-        #     #     variant_record.info['VAF'] = vaf
-        #     ev_reads = variant_record.info['TumourEvidenceReads']
-        #     ev_reads = int(ev_reads) if isinstance(ev_reads, str) else sum([int(x) for x in ev_reads])
-        #     # if 'TumourBp2ClipEvidence' in variant_record.info:
-        #     #     ev_reads += (int(variant_record.info['TumourBp2ClipEvidence']) + int(variant_record.info['TumourBp1ClipEvidence'])) / 2
-        #     total_reads = int(variant_record.info['TumourReads'])
-        #     vaf = ev_reads / total_reads
-        #     variant_record.info['VAF'] = vaf
-        #     # variant_record.info['file'] = vcf_file.split('/')[-1]
-        #     # if length > 100 and length < 550:  # Remove small indels
-        #     #     continue
-
-        variant_data.append([start_chrom, start, ref, alt, length, end_chrom,
-                            end, brackets, type_inferred, variant_record])
-
-    print('Read {} variants from {}'.format(len(variant_data), vcf_file))
-    return pd.DataFrame(variant_data, columns=['start_chrom', 'start', 'ref', 'alt', 'length', 'end_chrom', 'end', 'brackets', 'type_inferred', 'variant_obj'])
+    print('Read {} variants from {}'.format(len(variant_df), vcf_file))
+    return variant_df
 
 
-def extract_variants(vcf_files):
-    with ThreadPoolExecutor() as executor:
+def extract_variants(vcf_files, num_threads):
+    with ThreadPoolExecutor(max_workers=num_threads) as executor:
         variants_dfs = executor.map(_read_vcf, vcf_files)
     return pd.concat(variants_dfs, ignore_index=True)
 
@@ -115,8 +71,8 @@ def extract_variants(vcf_files):
 def _maximum_non_overlapping_variants(variants, compare_values, intervals_used, padding):
     def in_used_intervals(val):
         index_start = bisect.bisect_right(intervals_used, (val[start], -1))
-        in_interval = (index_start > 0 and intervals_used[index_start-1][1]+padding >= val[start]) \
-            or (index_start != len(intervals_used) and intervals_used[index_start][0]-padding <= val[end])
+        in_interval = (index_start > 0 and intervals_used[index_start - 1][1] + padding >= val[start]) \
+            or (index_start != len(intervals_used) and intervals_used[index_start][0] - padding <= val[end])
         return in_interval
 
     selected_variants = np.full(len(variants), False)
@@ -131,7 +87,7 @@ def _maximum_non_overlapping_variants(variants, compare_values, intervals_used, 
             selected_variants[i] = True
             i += 1
         else:
-            next_var = variants.iloc[i+1]
+            next_var = variants.iloc[i + 1]
             if curr_var[end] + padding < next_var[start] or in_used_intervals(next_var):
                 selected_variants[i] = True
                 last_end = curr_var[end]
@@ -142,7 +98,7 @@ def _maximum_non_overlapping_variants(variants, compare_values, intervals_used, 
                     selected_variants[i] = True
                     last_end = curr_var[end]
                 else:
-                    selected_variants[i+1] = True
+                    selected_variants[i + 1] = True
                     last_end = next_var[end]
                 i += 2
     return variants.loc[selected_variants]
@@ -163,7 +119,7 @@ def _retrieve_complete_inversions(selected_inversions, all_inversions):
                     inversion['brackets'] != close_inversion['brackets']:
                 inversions.append(close_inversion)
                 # Must have the same VAF
-                # close_inversion['variant_obj'].info['VAF'] = inversion['variant_obj'].info['VAF']
+                # close_inversion['variant_record_obj'].info['VAF'] = inversion['variant_record_obj'].info['VAF']
                 break
 
     return pd.DataFrame.from_records(inversions, columns=selected_inversions.columns)
@@ -312,8 +268,8 @@ def write_vcf(variants_df, output_file, template_vcfs):
     variants_df.sort_values(by=['start_chrom', 'start'], inplace=True)
     with open(output_file, 'w') as output_vcf:
         output_vcf.write(header_str)
-        for _, variant_record_obj in variants_df['variant_obj'].items():
-            output_vcf.write(str(variant_record_obj)+'\n')
+        for _, variant_record_obj in variants_df['variant_record_obj'].items():
+            output_vcf.write(str(variant_record_obj) + '\n')
 
 
 if __name__ == '__main__':
@@ -324,9 +280,24 @@ if __name__ == '__main__':
                         help='Maximum number of variants to extract of each type [SNV, INDEL, TRA, INV, DUP, DEL, INS]. Default: [200, 200, 200, 200, 200, 200, 200]')
     parser.add_argument('--padding', type=int, default=550, help='Minumum padding (bp) between variants')
     parser.add_argument('--indel-threshold', type=int, default=100, help='Maximum length of an indel')
+    parser.add_argument('--seed', type=int, default=None, help='Random seed')
+    parser.add_argument('--threads', type=int, default=1, help='Number of threads to use')
+    parser.add_argument('--random-vafs', type=float, nargs='+', default=[], help='Random VAFs to use')
+    parser.add_argument('--random-vafs-weights', type=float, nargs='+', default=[], help='Random VAFs weights to use')
+    parser.add_argument('--force-random-vafs', action='store_true', help='Force to set random VAFs')
 
     args = parser.parse_args()
 
-    variants_df = extract_variants(args.inputs)
-    selected_variants_df = select_variants(variants_df,  args.indel_threshold, args.num_variants, args.padding)
+    # Check that random vafs weights are the same length as random vafs
+    if len(args.random_vafs) != len(args.random_vafs_weights):
+        raise ValueError('random-vafs and random-vafs-weights must have the same length')
+
+    if args.seed is not None:
+        np.random.seed(args.seed)
+
+    variants_df = extract_variants(args.inputs, args.threads)
+    selected_variants_df = select_variants(variants_df, args.indel_threshold, args.num_variants, args.padding)
+    if len(args.random_vafs) > 0:
+        selected_variants_df['variant_record_obj'].apply(_set_random_vaf(
+            args.random_vafs, args.random_vafs_weights, args.force_random_vafs))
     write_vcf(selected_variants_df, args.output, args.inputs)

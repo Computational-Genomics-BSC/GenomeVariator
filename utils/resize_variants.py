@@ -2,19 +2,13 @@
 # Author: Rodrigo Martin
 # BSC Dual License
 
-import os
-import sys
 import argparse
 import pandas as pd
 import random
 import pysam
 
-SEED = 1
-
-random.seed(SEED)
 
 from variant_extractor import VariantExtractor  # noqa
-from variant_extractor.variants import BracketSVRecord  # noqa
 
 
 def _read_vcf(vcf_file):
@@ -48,11 +42,11 @@ def _shorten_variants(variant_row, min_length, max_length):
         new_end = old_variant_record.pos + new_length
         if old_variant_record.alt_sv_shorthand is not None:
             new_variant_record = old_variant_record._replace(length=new_length, end=new_end)
-        elif old_variant_record.alt_sv_bracket is not None:
-            new_alt = f'{old_variant_record.alt_sv_bracket.prefix}{old_variant_record.alt_sv_bracket.bracket}{old_variant_record.alt_sv_bracket.contig}:{old_variant_record.pos + new_length}{old_variant_record.alt_sv_bracket.bracket}{old_variant_record.alt_sv_bracket.suffix}'
-            new_bracket_sv_record = old_variant_record.alt_sv_bracket._replace(pos=new_end)
+        elif old_variant_record.alt_sv_breakend is not None:
+            new_alt = f'{old_variant_record.alt_sv_breakend.prefix}{old_variant_record.alt_sv_breakend.bracket}{old_variant_record.alt_sv_breakend.contig}:{old_variant_record.pos + new_length}{old_variant_record.alt_sv_breakend.bracket}{old_variant_record.alt_sv_breakend.suffix}'
+            new_bracket_sv_record = old_variant_record.alt_sv_breakend._replace(pos=new_end)
             new_variant_record = old_variant_record._replace(
-                length=new_length, alt=new_alt, end=new_end, alt_sv_bracket=new_bracket_sv_record)
+                length=new_length, alt=new_alt, end=new_end, alt_sv_breakend=new_bracket_sv_record)
         else:
             if old_variant_record.variant_type.name == 'DUP':
                 new_alt = old_variant_record.alt[:new_length]
@@ -77,17 +71,18 @@ if __name__ == '__main__':
     parser.add_argument('--affected-size', type=int, nargs=2,
                         default=[2000, 999999999], help='Size of the affected variants')
     parser.add_argument('--num-modifications', type=int, default=4000, help='Number of modifications to perform')
+    parser.add_argument('--seed', type=int, default=None, help='Random seed')
 
     args = parser.parse_args()
 
-    random.seed(42)
+    if args.seed is not None:
+        random.seed(args.seed)
 
     vcf_data = _read_vcf(args.input_vcf)
 
     # Filter variants by affected size
     affected_size_mask = (vcf_data['length'] >= args.affected_size[0]) & (vcf_data['length'] <= args.affected_size[1])
     affected_variants = vcf_data[affected_size_mask]
-
 
     # Get a subset of the affected variants
     affected_variants = affected_variants.sample(n=args.num_modifications, random_state=42)
@@ -108,4 +103,3 @@ if __name__ == '__main__':
         for variant_row in vcf_data.itertuples():
             vcf_file.write(str(variant_row.variant_obj))
             vcf_file.write('\n')
-
