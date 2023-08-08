@@ -18,7 +18,7 @@ def _read_vcf(vcf_file):
         length = variant_record.length
         type_inferred = variant_record.variant_type.name
 
-        if length == 0 and not type_inferred == 'TRN' and not type_inferred == 'SNV' and not type_inferred == 'SGL':
+        if length == 0 and not type_inferred == 'TRA' and not type_inferred == 'SNV' and not type_inferred == 'SGL':
             print('Warning: Skipped variant with 0 length.')
             continue
 
