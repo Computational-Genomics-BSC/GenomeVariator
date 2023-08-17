@@ -155,3 +155,5 @@ test_data/
 logs/
 test_split_command.sh
 test_variator_command.sh
+err.*
+out.*
