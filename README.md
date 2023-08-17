@@ -32,7 +32,7 @@ The process of generating an tumorized genome with genomic variants from an exis
 
 First, split the input file into two files (_Normal_ and _Normal 2_ samples) using AlignmentSplitter. Following is an example of how to divide an 300X input CRAM file into two 30X CRAM files in a 16-core and 32 GiB RAM machine:
 ```
-python3 -O src/alignment_splitter.py -i in.cram -ic 300 -o splitted_ -oc 30 -sc 2 -t 16 -s 0
+python3 -O src/alignment_splitter.py -i in_300X.cram -ic 300 -o splitted_ -oc 30 -sc 2 -p 16 -s 0
 
 mv splitted_0_30X_0 normal_30X.cram
 mv splitted_0_30X_1 normal_2_30X.cram
