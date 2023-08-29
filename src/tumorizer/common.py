@@ -78,8 +78,12 @@ def replace_reads(original_file, replace_file, output_file, fasta_ref=None, excl
     sm_name = 'TUMOR'
     header = original_alignment.header
     new_header = header.to_dict()
-    rg_name = new_header['RG'][0]['ID'] if 'RG' in new_header else 'VARIATED_GENOME'
-    new_header['RG'] = [{'ID': rg_name, 'SM': sm_name}]
+    if 'RG' in new_header:
+        # Iterate over read groups and add sample name
+        for rg in new_header['RG']:
+            rg['SM'] = sm_name
+    else:
+        new_header['RG'] = [{'ID': 'VARIATED_GENOME', 'SM': sm_name}]
 
     exclude_reads = exclude_file_reads.copy()
     already_used_read_flags = defaultdict(set)
