@@ -50,6 +50,7 @@ def index_alignment(alignment_path, processes):
     logging.info(f'Indexing with: {" ".join(index_args)}')
     return subprocess.run(index_args, check=True)
 
+
 def _get_write_mode(filename):
     return 'wb' if filename.endswith('.bam') else 'wc' if filename.endswith('.cram') else 'w'
 
@@ -84,6 +85,7 @@ def replace_reads(original_file, replace_file, output_file, fasta_ref=None, excl
             rg['SM'] = sm_name
     else:
         new_header['RG'] = [{'ID': 'VARIATED_GENOME', 'SM': sm_name}]
+    rg_name = new_header['RG'][0]['ID']
 
     exclude_reads = exclude_file_reads.copy()
     already_used_read_flags = defaultdict(set)
@@ -136,7 +138,6 @@ def replace_reads(original_file, replace_file, output_file, fasta_ref=None, excl
             replace_pos = replace_reads[contig][replace_index].reference_start \
                 if len(replace_reads[contig]) > 0 \
                 else original_alignment.get_reference_length(contig)
-        # Ignore secondary and supplementary reads
         if read.query_name not in exclude_reads:
             while read.reference_start > replace_pos:
                 output_alignment.write(replace_reads[contig][replace_index])
