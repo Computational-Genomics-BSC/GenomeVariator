@@ -2,12 +2,15 @@ Bootstrap: docker
 From: ubuntu:20.04
 Stage: spython-base
 
+%files
+dependencies/ /GenomeVariator/
+src/ /GenomeVariator/
+utils/ /GenomeVariator/
 %labels
 author="Rodrigo Martin <rodrigo.martin@bsc.es>"
 %post
 
-PATH=$PATH:$HOME/bin
-DEBIAN_FRONTEND=noninteractive
+export DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies
 apt-get update && apt-get upgrade -y && apt-get install -y \
@@ -43,9 +46,7 @@ cd exonerate && autoreconf -fi  && ./configure && make && make install
 
 export PATH=$PATH:$HOME/bin
 
-git clone --recurse-submodules --remote-submodules https://github.com/Computational-Genomics-BSC/GenomeVariator
-%environment
-export PATH=$PATH:$HOME/bin
+# Copy the content of the repository to the folder GenomeVariator
 %runscript
 exec /bin/bash "$@"
 %startscript

@@ -1,8 +1,7 @@
 FROM ubuntu:20.04
 LABEL author="Rodrigo Martin <rodrigo.martin@bsc.es>"
 
-ENV PATH=$PATH:$HOME/bin
-ARG DEBIAN_FRONTEND=noninteractive
+RUN export DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies
 RUN apt-get update && apt-get upgrade -y && apt-get install -y \
@@ -38,4 +37,7 @@ RUN cd exonerate && autoreconf -fi  && ./configure && make && make install
 
 RUN export PATH=$PATH:$HOME/bin
 
-RUN git clone --recurse-submodules --remote-submodules https://github.com/Computational-Genomics-BSC/GenomeVariator
+# Copy the content of the repository to the folder GenomeVariator
+COPY dependencies/ /GenomeVariator/
+COPY src/ /GenomeVariator/
+COPY utils/ /GenomeVariator/
