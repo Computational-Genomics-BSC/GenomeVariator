@@ -38,4 +38,4 @@ RUN cd exonerate && autoreconf -fi  && ./configure && make && make install
 
 RUN export PATH=$PATH:$HOME/bin
 
-RUN git clone --recurse-submodules --remote-submodules https://gitlab.bsc.es/rmarti1/genome-variator
+RUN git clone --recurse-submodules --remote-submodules https://github.com/Computational-Genomics-BSC/GenomeVariator
