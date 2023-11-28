@@ -132,19 +132,19 @@ def variate_alignment(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--fasta-ref', type=str, required=True, help='Reference FASTA file.')
-    parser.add_argument('-v', '--vcf-file', type=str, required=True, help='VCF file with variants.')
-    parser.add_argument('-i', '--input-alignment', type=str, required=True, help='Input alignment file (SAM/BAM/CRAM).')
+    parser.add_argument('-f', '--fasta-ref', type=str, required=True, help='Reference FASTA file')
+    parser.add_argument('-v', '--vcf-file', type=str, required=True, help='VCF file with variants')
+    parser.add_argument('-i', '--input-alignment', type=str, required=True, help='Input alignment file (SAM/BAM/CRAM)')
     parser.add_argument('-o', '--output-alignment', type=str, required=True,
-                        help='Output alignment file (SAM/BAM/CRAM).')
-    parser.add_argument('--vaf', type=float, help='Variant allele frequency (0.0-1.0).')
-    parser.add_argument('--donor', type=str, help='Donor alignment file (for BAMSurgeon).')
-    parser.add_argument('-td', '--tmp-dir', type=str, default='.', help='Directory where temporal files are stored.')
+                        help='Output alignment file (SAM/BAM/CRAM)')
+    parser.add_argument('--vaf', type=float, help='Variant allele frequency (0.0-1.0)')
+    parser.add_argument('--donor', type=str, help='Donor alignment file (for BAMSurgeon)')
+    parser.add_argument('-td', '--tmp-dir', type=str, default='.', help='Directory where temporal files are stored')
     parser.add_argument('-tds', '--tmp-dir-size', type=float, default=200,
-                        help='Maximum size of temporal directory (in GB).')
-    parser.add_argument('-p', '--processes', type=int, default=1, help='Maximum number of processes.')
-    parser.add_argument('-mm', '--max-memory', type=int, default=96, help='Maximum memory usage (in GB).')
-    parser.add_argument('-s', '--seed', type=int, default=random.randint(0, 2**32), help='Random seed.')
+                        help='Maximum size of temporal directory (in GB)')
+    parser.add_argument('-p', '--processes', type=int, default=1, help='Maximum number of processes')
+    parser.add_argument('-mm', '--max-memory', type=int, default=96, help='Maximum memory usage (in GB)')
+    parser.add_argument('-s', '--seed', type=int, default=random.randint(0, 2**32), help='Random seed')
 
     args = parser.parse_args()
     logging.basicConfig(format='%(levelname)s %(asctime)s %(message)s', level='INFO')

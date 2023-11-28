@@ -4,58 +4,126 @@ GenomeVariator is a tool for adding genomic variants to an existing genome (in S
 
 The limited availability of real validated datasets for variant calling benchmarking makes this exercise difficult. This is why tumorized genomes are currently complementing these real datasets. Tumorized genomes ensure the data protection of patients, because they are not identifiable, and thus remove the need for bureaucratic processes that slow down progress in the field of cancer research. Furthermore, tumorized genomes enable researchers to have absolute control over the features and variants they contain.
 
-GenomeVariator is framed under EUCANCan’s (EUropean-CANadian Cancer network) second work package and is used to complement the benchmarking datasets of EUCANCan’s genomic variant calling benchmarking/recommendation platform. The generation workflow is provided as a standalone Python script with a command-line interface and is optimized for running in a HPC environment, more precisely in MareNostrum 4.
+GenomeVariator is framed under EUCANCan’s (EUropean-CANadian Cancer network) second work package and is used to complement the benchmarking datasets of ONCOLINER. The generation workflow is provided as a standalone Python script with a command-line interface and is optimized for running in a HPC environment, more precisely in MareNostrum 4.
+
+![oncoliner_tumorized](docs/images/oncoliner_tumorized.png)
 
 ## Table of contents<!-- omit in toc -->
-- [Getting started](#getting-started)
+- [Installation](#installation)
+  - [Singularity](#singularity)
+  - [Docker](#docker)
 - [Usage](#usage)
-- [Scripts](#scripts)
-  - [Tumorizer](#tumorizer)
-  - [AlignmentSplitter](#alignmentsplitter)
+  - [Interface](#interface)
+- [Authors](#authors)
+- [License](#license)
 
 
-## Getting started
+## Installation
+### Singularity
+We recommend using [`singularity-ce`](https://github.com/sylabs/singularity) with a version higher than 3.9.0. You can download the Singularity container using the following command (does not require root privileges):
 
-You can build the docker image with the following command:
+```
+singularity pull prepy-wrapper.sif oras://ghcr.io/eucancan/prepy-wrapper:latest
+```
 
-```bash
+If you want to build the container yourself, you can use the [`singularity.def`](singularity.def) file (requires root privileges):
+```
+sudo singularity build --force genome-variator.sif singularity.def
+```
+
+### Docker
+You can download the Docker image using the following command:
+```
+docker pull ghcr.io/eucancan/prepy-wrapper:latest
+```
+
+You can build the Docker container with the following command (requires root privileges):
+
+```
 docker build -t genome-variator .
 ```
 
-Or follow the instructions in the [Dockerfile](Dockerfile) to install the dependencies.
 
 ## Usage
 
-The process of generating an tumorized genome with genomic variants from an existing human genome solely consists in adding the genomic variants to the alignment file of an existing genome. This requires the use of the [AlignmentSplitter](#alignmentsplitter) and [Tumorizer](#tumorizer) scripts.
+The process of generating an tumorized genome with genomic variants from an existing human genome solely consists in adding the genomic variants to the alignment file of an existing genome. This requires the use of the [`AlignmentSplitter`](#alignmentsplitter) and [`Tumorizer`](#tumorizer) scripts.
 
 ![tumorized_from_existing](docs/images/tumorized_from_existing.png)
 
-First, split the input file into two files (_Normal_ and _Normal 2_ samples) using AlignmentSplitter. Following is an example of how to divide an 300X input CRAM file into two 30X CRAM files in a 16-core and 32 GiB RAM machine:
+First, split the input file into two files (_Normal_ and _Normal 2_ samples) using `AlignmentSplitter`. Following is an example of how to divide an 300X input CRAM file into two 30X CRAM files in a 16-core and 32 GiB RAM machine:
 ```
-python3 -O src/alignment_splitter.py -i in_300X.cram -ic 300 -o splitted_ -oc 30 -sc 2 -p 16 -s 0
+python3 -O /genome-variator/alignment_splitter.py -i in_300X.cram -ic 300 -o splitted_ -oc 30 -sc 2 -p 16 -s 0
 
 mv splitted_0_30X_0 normal_30X.cram
 mv splitted_0_30X_1 normal_2_30X.cram
 ```
 
-Finally, add the variants to the second normal CRAM file using the Tumorizer in a 16-core machine:
+Finally, add the variants to the second normal CRAM file using the `Tumorizer`:
 ```
-python3 -O src/tumorizer/main.py -i normal_2_30X.cram -o tumor.cram -f ref.fa -v variants.vcf --vaf 0.5 -td results_tmp -p 16 -mm 32 -s 0
+python3 -O /genome-variator/tumorizer/main.py -i normal_2_30X.cram -o tumor.cram -f ref.fa -v variants.vcf --vaf 0.5 -td results_tmp -p 16 -mm 32 -s 0
+```
+### Interface
+
+#### AlignmentSplitter<!-- omit in toc -->
+```
+usage: alignment_splitter.py [-h] -i INPUT [-f FASTA] -ic INPUT_COVERAGE -o
+                             OUTPUT -oc OUTPUT_COVERAGES
+                             [OUTPUT_COVERAGES ...] [-sc SAMPLE_COUNT]
+                             [-p MAX_PROCESSES] [-s SEED]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i INPUT, --input INPUT
+                        Input alignment file
+  -f FASTA, --fasta FASTA
+                        Reference fasta file (required for CRAM files)
+  -ic INPUT_COVERAGE, --input-coverage INPUT_COVERAGE
+                        Input file coverage
+  -o OUTPUT, --output OUTPUT
+                        Output prefix
+  -oc OUTPUT_COVERAGES [OUTPUT_COVERAGES ...], --output-coverages OUTPUT_COVERAGES [OUTPUT_COVERAGES ...]
+                        Output coverages
+  -sc SAMPLE_COUNT, --sample-count SAMPLE_COUNT
+                        Number of samples to generate for each output coverage
+  -p MAX_PROCESSES, --max-processes MAX_PROCESSES
+                        Number of max processes
+  -s SEED, --seed SEED  Random seed
 ```
 
-## Scripts
-### Tumorizer
-Its source code can be found in the [src/tumorizer](src/tumorizer) directory.
+#### Tumorizer<!-- omit in toc -->
+```
+usage: main.py [-h] -f FASTA_REF -v VCF_FILE -i INPUT_ALIGNMENT -o
+               OUTPUT_ALIGNMENT [--vaf VAF] [--donor DONOR] [-td TMP_DIR]
+               [-tds TMP_DIR_SIZE] [-p PROCESSES] [-mm MAX_MEMORY] [-s SEED]
 
-#### Dependencies<!-- omit in toc -->
-* [SAMtools](http://www.htslib.org/)
-* [Pysam](https://github.com/pysam-developers/pysam) >= 0.19.0
-* BAMSurgeon's [dependencies](https://github.com/adamewing/bamsurgeon#dependencies)
-* [variant-extractor](https://github.com/EUCANCan/variant-extractor)
+optional arguments:
+  -h, --help            show this help message and exit
+  -f FASTA_REF, --fasta-ref FASTA_REF
+                        Reference FASTA file
+  -v VCF_FILE, --vcf-file VCF_FILE
+                        VCF file with variants
+  -i INPUT_ALIGNMENT, --input-alignment INPUT_ALIGNMENT
+                        Input alignment file (SAM/BAM/CRAM)
+  -o OUTPUT_ALIGNMENT, --output-alignment OUTPUT_ALIGNMENT
+                        Output alignment file (SAM/BAM/CRAM)
+  --vaf VAF             Variant allele frequency (0.0-1.0)
+  --donor DONOR         Donor alignment file (for BAMSurgeon)
+  -td TMP_DIR, --tmp-dir TMP_DIR
+                        Directory where temporal files are stored
+  -tds TMP_DIR_SIZE, --tmp-dir-size TMP_DIR_SIZE
+                        Maximum size of temporal directory (in GB)
+  -p PROCESSES, --processes PROCESSES
+                        Maximum number of processes
+  -mm MAX_MEMORY, --max-memory MAX_MEMORY
+                        Maximum memory usage (in GB)
+  -s SEED, --seed SEED  Random seed
+```
 
-### AlignmentSplitter
-Its source code can be found in the [src/alignment_splitter](src/alignment_splitter) file.
+## Authors
 
-#### Dependencies<!-- omit in toc -->
-* [Pysam](https://github.com/pysam-developers/pysam) >= 0.19.0
-* [variant-extractor](https://github.com/EUCANCan/variant-extractor)
+* **Rodrigo Martín** - *Code and Scientific Methodology* - [ORCID](https://orcid.org/0000-0002-6086-9037) [GitHub](https://github.com/Rapsssito)
+* **David Torrents** - *Scientific Methodology* - [ORCID](https://orcid.org/0000-0002-6086-9037)
+
+## License
+
+This project is licensed under the BSC Dual License - see the [LICENSE](LICENSE.md) file for details.
