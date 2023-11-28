@@ -2,6 +2,13 @@
 
 
 
+## v1.0.1 (2023-11-28)
+
+### Fix
+
+* fix: Fix Dockerfile ([`7ee328b`](https://github.com/Computational-Genomics-BSC/GenomeVariator/commit/7ee328be839826fcb0eaeb9e733f2c0789b69bf3))
+
+
 ## v1.0.0 (2023-11-28)
 
 ### Breaking
