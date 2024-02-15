@@ -123,7 +123,7 @@ optional arguments:
 
 ## Authors
 
-* **Rodrigo Martín** - *Code and Scientific Methodology* - [ORCID](https://orcid.org/0000-0002-6086-9037) [GitHub](https://github.com/Rapsssito)
+* **Rodrigo Martín** - *Code and Scientific Methodology* - [ORCID](https://orcid.org/0000-0002-2128-1329) [GitHub](https://github.com/Rapsssito)
 * **David Torrents** - *Scientific Methodology* - [ORCID](https://orcid.org/0000-0002-6086-9037)
 
 ## License
