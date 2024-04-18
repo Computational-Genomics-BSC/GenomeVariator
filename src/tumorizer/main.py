@@ -133,12 +133,12 @@ def variate_alignment(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--fasta-ref', type=str, required=True, help='Reference FASTA file')
-    parser.add_argument('-v', '--vcf-file', type=str, required=True, help='VCF file with variants')
+    parser.add_argument('-v', '--vcf-file', type=str, required=True, help='VCF file with variants. Each variant can have a VAF field in the INFO column so that the VAF can be different for each variant. If the VAF field is not present, the default VAF is used.')
     parser.add_argument('-i', '--input-alignment', type=str, required=True, help='Input alignment file (SAM/BAM/CRAM)')
     parser.add_argument('-o', '--output-alignment', type=str, required=True,
                         help='Output alignment file (SAM/BAM/CRAM)')
-    parser.add_argument('--vaf', type=float, help='Variant allele frequency (0.0-1.0)')
-    parser.add_argument('--donor', type=str, help='Donor alignment file (for BAMSurgeon)')
+    parser.add_argument('--vaf', type=float, default=0.5, help='Default variant allele frequency (0.0-1.0). Default is 0.5')
+    parser.add_argument('--donor', type=str, help='Optional extra donor alignment file (used for large duplications)')
     parser.add_argument('-td', '--tmp-dir', type=str, default='.', help='Directory where temporal files are stored')
     parser.add_argument('-tds', '--tmp-dir-size', type=float, default=200,
                         help='Maximum size of temporal directory (in GB)')

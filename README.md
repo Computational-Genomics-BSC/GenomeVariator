@@ -103,13 +103,17 @@ optional arguments:
   -f FASTA_REF, --fasta-ref FASTA_REF
                         Reference FASTA file
   -v VCF_FILE, --vcf-file VCF_FILE
-                        VCF file with variants
+                        VCF file with variants. Each variant can have a VAF
+                        field in the INFO column so that the VAF can be
+                        different for each variant. If the VAF field is not
+                        present, the default VAF is used.
   -i INPUT_ALIGNMENT, --input-alignment INPUT_ALIGNMENT
                         Input alignment file (SAM/BAM/CRAM)
   -o OUTPUT_ALIGNMENT, --output-alignment OUTPUT_ALIGNMENT
                         Output alignment file (SAM/BAM/CRAM)
-  --vaf VAF             Variant allele frequency (0.0-1.0)
-  --donor DONOR         Donor alignment file (for BAMSurgeon)
+  --vaf VAF             Default variant allele frequency (0.0-1.0). Default is
+                        0.5
+  --donor DONOR         Extra donor alignment file (for large duplications)
   -td TMP_DIR, --tmp-dir TMP_DIR
                         Directory where temporal files are stored
   -tds TMP_DIR_SIZE, --tmp-dir-size TMP_DIR_SIZE
