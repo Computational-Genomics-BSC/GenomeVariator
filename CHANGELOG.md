@@ -1,13 +1,16 @@
 # CHANGELOG
 
+## v1.0.2 (2024-07-17)
 
+### Fix
+
+* fix: Add default VAF and improve docs ([`cf6a1b4`](https://github.com/Computational-Genomics-BSC/GenomeVariator/commit/cf6a1b4e3d6bfc387c82d7d9169d73ab8ba9ed2b))
 
 ## v1.0.1 (2023-11-28)
 
 ### Fix
 
 * fix: Fix Dockerfile ([`7ee328b`](https://github.com/Computational-Genomics-BSC/GenomeVariator/commit/7ee328be839826fcb0eaeb9e733f2c0789b69bf3))
-
 
 ## v1.0.0 (2023-11-28)
 
