@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v1.0.3 (2024-09-05)
+
+### Fix
+
+* fix: Fix docker compatibility ([`d18e586`](https://github.com/Computational-Genomics-BSC/GenomeVariator/commit/d18e5868136d6e85a2c41b205277fe81ff47608a))
+
 ## v1.0.2 (2024-07-17)
 
 ### Fix
