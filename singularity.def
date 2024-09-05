@@ -10,10 +10,8 @@ utils/ /GenomeVariator/
 author="Rodrigo Martin <rodrigo.martin@bsc.es>"
 %post
 
-export DEBIAN_FRONTEND=noninteractive
-
 # Install dependencies
-apt-get update && apt-get upgrade -y && apt-get install -y \
+apt-get update && apt-get upgrade -y && DEBIAN_FRONTEND=noninteractive apt-get install -y \
 python3 \
 python3-pip \
 git \
