@@ -32,7 +32,17 @@ def _stats_from_alignment(alignment_file, fasta_ref):
                 break
             read_sizes.append(read.query_length)
             insert_sizes.append(abs(read.template_length))
+    # If not enough reads were found, use the first 1000 reads in the file
+    if len(read_sizes) < num_reads:
+        missing_reads = num_reads - len(read_sizes)
+        for i, read in enumerate(f.fetch()):
+            if i >= missing_reads:
+                break
+            read_sizes.append(read.query_length)
+            insert_sizes.append(abs(read.template_length))
     f.close()
+    if len(read_sizes) < num_reads:
+        raise ValueError('Not enough reads found in alignment file')
     data_stats = dict()
     data_stats['read_size_median'] = np.median(read_sizes)
     data_stats['insert_size_median'] = np.median(insert_sizes)
