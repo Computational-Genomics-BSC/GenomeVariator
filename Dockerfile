@@ -36,6 +36,6 @@ RUN cd exonerate && autoreconf -fi  && ./configure && make && make install
 RUN export PATH=$PATH:$HOME/bin
 
 # Copy the content of the repository to the folder GenomeVariator
-COPY dependencies/ /GenomeVariator/
-COPY src/ /GenomeVariator/
-COPY utils/ /GenomeVariator/
+COPY dependencies/ /GenomeVariator/dependencies/
+COPY src/ /GenomeVariator/src/
+COPY utils/ /GenomeVariator/utils/

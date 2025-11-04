@@ -58,7 +58,7 @@ The process of generating an tumorized genome with genomic variants from an exis
 
 First, split the input file into two files (_Normal_ and _Normal 2_ samples) using `AlignmentSplitter`. Assuming you have a singularity image called `genome-variator.sif`, following is an example of how to divide an 300X input CRAM file into two 30X CRAM files in a 16-core and 32 GiB RAM machine:
 ```
-singularity exec genome-variator.sif python3 -O /GenomeVariator/alignment_splitter.py -i in_300X.cram -ic 300 -o splitted_ -oc 30 -sc 2 -p 16 -s 0
+singularity exec genome-variator.sif python3 -O /GenomeVariator/src/alignment_splitter.py -i in_300X.cram -ic 300 -o splitted_ -oc 30 -sc 2 -p 16 -s 0
 
 mv splitted_0_30X_0 normal_30X.cram
 mv splitted_0_30X_1 normal_2_30X.cram
@@ -66,7 +66,7 @@ mv splitted_0_30X_1 normal_2_30X.cram
 
 Finally, add the variants to the second normal CRAM file using the `Tumorizer`:
 ```
-singularity exec genome-variator.sif python3 -O /GenomeVariator/tumorizer/main.py -i normal_2_30X.cram -o tumor.cram -f ref.fa -v variants.vcf --vaf 0.5 -td results_tmp -p 16 -mm 32 -s 0
+singularity exec genome-variator.sif python3 -O /GenomeVariator/src/tumorizer/main.py -i normal_2_30X.cram -o tumor.cram -f ref.fa -v variants.vcf --vaf 0.5 -td results_tmp -p 16 -mm 32 -s 0
 ```
 ### Interface
 

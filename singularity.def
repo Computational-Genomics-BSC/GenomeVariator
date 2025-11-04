@@ -3,9 +3,9 @@ From: ubuntu:20.04
 Stage: spython-base
 
 %files
-dependencies/ /GenomeVariator/
-src/ /GenomeVariator/
-utils/ /GenomeVariator/
+dependencies/ /GenomeVariator/dependencies/
+src/ /GenomeVariator/src/
+utils/ /GenomeVariator/utils/
 %labels
 author="Rodrigo Martin <rodrigo.martin@bsc.es>"
 %post
