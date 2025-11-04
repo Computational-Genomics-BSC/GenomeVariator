@@ -27,7 +27,7 @@ GenomeVariator is framed under EUCANCan’s (EUropean-CANadian Cancer network) s
 We recommend using [`singularity-ce`](https://github.com/sylabs/singularity) with a version higher than 3.9.0. You can download the Singularity container using the following command (does not require root privileges):
 
 ```
-singularity pull genome-variator.sif docker://ghcr.io/Computational-Genomics-BSC/genomevariator:latest
+singularity pull genome-variator.sif docker://ghcr.io/computational-genomics-bsc/genomevariator:latest
 ```
 
 If you want to build the container yourself, you can use the [`singularity.def`](singularity.def) file (requires root privileges):
@@ -39,7 +39,7 @@ sudo singularity build --force genome-variator.sif singularity.def
 ### Docker
 You can download the Docker image using the following command:
 ```
-docker pull ghcr.io/Computational-Genomics-BSC/genomevariator:latest
+docker pull ghcr.io/computational-genomics-bsc/genomevariator:latest
 ```
 
 You can build the Docker container with the following command (requires root privileges):
